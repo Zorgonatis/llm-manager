@@ -32,19 +32,16 @@ git clone https://github.com/Zorgonatis/llm-manager.git ~/llm-manager
 Create the CLI symlink:
 
 ```bash
-mkdir -p ~/bin
-ln -s ~/llm-manager/launcher.sh ~/bin/llm
+ln -s ~/llm-manager/launcher.sh ~/.local/bin/llm
 ```
 
-Add `~/bin` to your PATH:
-
-```bash
-# Fish:
-echo 'set -gx PATH $PATH ~/bin' >> ~/.config/fish/config.fish
-# Bash:
-echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-```
+> `~/.local/bin` is part of the XDG standard and is already in PATH on most Linux distributions. If it isn't:
+> ```bash
+> # Fish:
+> echo 'set -gx PATH $PATH ~/.local/bin' >> ~/.config/fish/config.fish
+> # Bash:
+> echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+> ```
 
 Alternatively, install system-wide:
 

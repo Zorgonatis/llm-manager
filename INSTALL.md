@@ -21,14 +21,13 @@ git clone https://github.com/Zorgonatis/llm-manager.git ~/llm-manager
 chmod +x ~/llm-manager/launcher.sh ~/llm-manager/service-wrapper.sh
 
 # Create the CLI symlink
-mkdir -p ~/bin
-ln -s ~/llm-manager/launcher.sh ~/bin/llm
+ln -s ~/llm-manager/launcher.sh ~/.local/bin/llm
 
-# Add ~/bin to PATH (choose your shell)
+# Ensure ~/.local/bin is in PATH (many distros include it by default)
 # Fish:
-echo 'set -gx PATH $PATH ~/bin' >> ~/.config/fish/config.fish
+echo 'set -gx PATH $PATH ~/.local/bin' >> ~/.config/fish/config.fish
 # Bash:
-echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
