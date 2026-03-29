@@ -60,8 +60,8 @@ cp model-Q4_K_M.gguf ~/.llm/models/my-model/
 name="My Model"
 description="Q4_K_M quant on Vulkan GPU"
 build="/opt/llama.cpp/install-vulkan"
-model="$HOME/.llm/models/my-model/model-Q4_K_M.gguf"
 <args>
+-m $HOME/.llm/models/my-model/model-Q4_K_M.gguf \
 --ctx-size 8192 \
 --threads -1 \
 --device Vulkan0 \
@@ -128,7 +128,6 @@ llm enable
 | `models_dir` | `$llm_dir/models` | GGUF model files directory |
 | `service_port` | `4444` | Persistent service port |
 | `instance_port_start` | `8081` | First instance port |
-| `systemd_user_dir` | `~/.config/systemd/user` | systemd user service directory |
 
 ### `models.conf` — Model configurations
 
@@ -139,6 +138,5 @@ Each model section has four metadata fields and an `<args>` block:
 | `name` | No | Display name |
 | `description` | No | Short description |
 | `build` | Yes | Path to llama.cpp build (must contain `bin/llama-server`) |
-| `model` | Yes | Path to `.gguf` file (supports `$HOME` and `~`) |
 
-All other options are raw `llama-server` flags in the `<args>` block. See `llama-server --help` for the full list.
+All other options — including `-m` for the model path — are raw `llama-server` flags in the `<args>` block. For HuggingFace auto-download, use `--hf-repo` and `--hf-file` instead of `-m`. See `llama-server --help` for the full list.

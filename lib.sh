@@ -131,16 +131,15 @@ get_args_block() {
 CMD_ARRAY=()
 
 # Build command array from config (no eval — safe word-splitting)
+# Everything passed to llama-server comes from the <args> block.
 build_cmdline() {
     local model_id="$1"
     local port="$2"
 
     local build
     build=$(get_config "$model_id" "build")
-    local model
-    model=$(get_config "$model_id" "model")
 
-    CMD_ARRAY=("$build/bin/llama-server" -m "$model")
+    CMD_ARRAY=("$build/bin/llama-server")
 
     local args
     args=$(get_args_block "$model_id")
@@ -160,20 +159,15 @@ build_cmdline() {
     CMD_ARRAY+=(--host 0.0.0.0 --port "$port")
 }
 
-# Validate model build and file paths exist
-validate_model_paths() {
+# Validate build binary exists
+validate_build_path() {
     local model_id="$1"
-    local build model
+    local build
 
     build=$(get_config "$model_id" "build")
-    model=$(get_config "$model_id" "model")
 
     if [ ! -x "$build/bin/llama-server" ]; then
         echo "Error: llama-server not found or not executable: $build/bin/llama-server" >&2
-        return 1
-    fi
-    if [ ! -f "$model" ]; then
-        echo "Error: Model file not found: $model" >&2
         return 1
     fi
     return 0

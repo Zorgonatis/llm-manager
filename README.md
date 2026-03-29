@@ -87,7 +87,6 @@ The file `~/.llm/llm.conf` controls system-wide settings like ports and model di
 models_dir=$llm_dir/models
 service_port=4444
 instance_port_start=8081
-systemd_user_dir=$HOME/.config/systemd/user
 ```
 
 The base directory (`llm_dir`) is automatically detected from the script location.
@@ -99,7 +98,6 @@ The base directory (`llm_dir`) is automatically detected from the script locatio
 | `models_dir` | Directory for GGUF model files (supports `$llm_dir`, `$HOME`, `~`) | `$llm_dir/models` |
 | `service_port` | Port for the main systemd service | 4444 |
 | `instance_port_start` | Starting port for temporary instances | 8081 |
-| `systemd_user_dir` | Systemd user service directory | `$HOME/.config/systemd/user` |
 
 > **Note**: You can override the config file location by setting the `LLM_CONF` environment variable.
 >
@@ -114,8 +112,8 @@ Edit `~/.llm/models.conf` to add models. Each model has a section header `[model
 name="My Model Display Name"
 description="Brief description"
 build="/path/to/llama.cpp/build"
-model="$HOME/.llm/models/my-model.gguf"
 <args>
+-m $HOME/.llm/models/my-model.gguf \
 --ctx-size 8192 \
 --threads -1 \
 --device Vulkan0 \
@@ -133,13 +131,27 @@ model="$HOME/.llm/models/my-model.gguf"
 | `name` | No | Display name (defaults to section ID) |
 | `description` | No | Model description |
 | `build` | Yes | Path to llama.cpp build directory (must contain `bin/llama-server`) |
-| `model` | Yes | Path to GGUF model file (supports `$HOME` and `~` expansion) |
 
 ### Args Block
 
-The `<args>...</args>` block contains raw `llama-server` CLI flags. Use `\` for line continuation. Supports `$HOME` and `~` expansion. New llama.cpp flags can be added here without any wrapper changes.
+The `<args>...</args>` block contains raw `llama-server` CLI flags — including `-m` for the model path. Use `\` for line continuation. Supports `$HOME` and `~` expansion. New llama.cpp flags can be added here without any wrapper changes.
 
-Common flags: `--ctx-size`, `--threads`, `--device`, `--gpu-layers`, `--flash-attn`, `--jinja`, `--temp`, `--top-p`, `--top-k`, `--min-p`, `--parallel`, `--mmproj`, `--cache-type-v`, `--cache-type-k`, `--split-mode`, `--tensor-split`, `--n-cpu-moe`, `--kv-unified`, `--swa-full`, `--no-mmap`, `--chat-template-file`
+For HuggingFace auto-download, use `--hf-repo` and `--hf-file` instead of `-m`:
+
+```ini
+[hf-model]
+name="HF Auto-Download Model"
+description="Auto-downloaded from HuggingFace"
+build="/opt/llama.cpp"
+<args>
+--hf-repo Qwen/Qwen3-0.6B-GGUF \
+--hf-file qwen3-0.6b-q8_0.gguf \
+--ctx-size 4096 \
+--threads 4
+</args>
+```
+
+Common flags: `-m`, `--hf-repo`, `--hf-file`, `--ctx-size`, `--threads`, `--device`, `--gpu-layers`, `--flash-attn`, `--jinja`, `--temp`, `--top-p`, `--top-k`, `--min-p`, `--parallel`, `--mmproj`, `--cache-type-v`, `--cache-type-k`, `--split-mode`, `--tensor-split`, `--n-cpu-moe`, `--kv-unified`, `--swa-full`, `--no-mmap`, `--chat-template-file`
 
 ## Usage
 
@@ -207,13 +219,13 @@ llm help
 
 ```
 systemd -> service-wrapper.sh -> reads llm.conf -> reads current_model
-    -> parses models.conf -> builds llama-server command -> exec
+    -> parses models.conf -> builds llama-server command from <args> block -> exec
 ```
 
 1. **`llm serve <model>`** writes model ID to `current_model` and starts systemd
 2. **systemd** executes `service-wrapper.sh`
 3. **service-wrapper.sh** reads `current_model` and parses `models.conf`
-4. **Command built** from config variables
+4. **Command built** from `build` path + `<args>` block
 5. **llama-server** runs as systemd service (auto-restart on crash)
 
 ### Port Allocation
@@ -236,8 +248,8 @@ Ports are configured in `~/.llm/llm.conf`. Default allocation:
 name="My CPU Model"
 description="Lightweight model for CPU inference"
 build="$HOME/llama.cpp"
-model="$HOME/.llm/models/my-model-Q4_K_M.gguf"
 <args>
+-m $HOME/.llm/models/my-model-Q4_K_M.gguf \
 --ctx-size 4096 \
 --threads 4
 </args>
@@ -250,8 +262,8 @@ model="$HOME/.llm/models/my-model-Q4_K_M.gguf"
 name="My GPU Model"
 description="Fast GPU inference"
 build="/opt/llama.cpp.vulkan"
-model="$HOME/.llm/models/my-model-Q4_K_M.gguf"
 <args>
+-m $HOME/.llm/models/my-model-Q4_K_M.gguf \
 --ctx-size 8192 \
 --device Vulkan0 \
 --flash-attn auto \
@@ -268,8 +280,8 @@ model="$HOME/.llm/models/my-model-Q4_K_M.gguf"
 name="Multi-GPU Model"
 description="Model split across two GPUs"
 build="/opt/llama.cpp.vulkan"
-model="$HOME/.llm/models/my-model.gguf"
 <args>
+-m $HOME/.llm/models/my-model.gguf \
 --ctx-size 131072 \
 --device Vulkan0,Vulkan1 \
 --split-mode layer \
@@ -285,8 +297,8 @@ model="$HOME/.llm/models/my-model.gguf"
 name="Vision Model"
 description="Multimodal model with vision support"
 build="/opt/llama.cpp.vulkan"
-model="$HOME/.llm/models/my-model.gguf"
 <args>
+-m $HOME/.llm/models/my-model.gguf \
 --mmproj $HOME/.llm/models/my-mmproj.gguf \
 --ctx-size 4096 \
 --device Vulkan0

@@ -102,16 +102,15 @@ ensure_service() {
 
 # Print a model entry for list_models
 _print_model_entry() {
-    local model_id="$1" name="$2" description="$3" model_path="$4" build_path="$5" current="$6"
+    local model_id="$1" name="$2" description="$3" build_path="$4" current="$5"
 
-    local status="" size=""
+    local status=""
 
     if [ -n "$build_path" ] && [ -d "$build_path" ]; then
-        if [ -n "$model_path" ] && [ -f "$model_path" ]; then
+        if [ -x "$build_path/bin/llama-server" ]; then
             status="${GREEN}✓${NC}"
-            size=$(du -h "$model_path" 2>/dev/null | cut -f1)
         else
-            status="${RED}✗${NC}"
+            status="${YELLOW}⚠${NC}"
         fi
     else
         status="${YELLOW}⚠${NC}"
@@ -125,7 +124,6 @@ _print_model_entry() {
     echo -e "  ${YELLOW}$model_id${NC} $current_indicator$status"
     echo -e "    $name"
     echo -e "    $description"
-    [ -n "$size" ] && echo -e "    Size: $size"
     echo ""
 }
 
@@ -139,7 +137,7 @@ list_models() {
         current=$(cat "$CURRENT_MODEL_FILE")
     fi
 
-    local section="" name="" description="" model_path="" build_path=""
+    local section="" name="" description="" build_path=""
     local in_args=0
 
     while IFS= read -r line; do
@@ -151,10 +149,10 @@ list_models() {
         if [[ "$line" =~ ^\[(.*)\]$ ]]; then
             # Print previous section
             if [ -n "$section" ]; then
-                _print_model_entry "$section" "$name" "$description" "$model_path" "$build_path" "$current"
+                _print_model_entry "$section" "$name" "$description" "$build_path" "$current"
             fi
             section="${BASH_REMATCH[1]}"
-            name="" description="" model_path="" build_path=""
+            name="" description="" build_path=""
             in_args=0
             continue
         fi
@@ -181,7 +179,6 @@ list_models() {
             case "$key" in
                 name) name="$value" ;;
                 description) description="$value" ;;
-                model) model_path="$value" ;;
                 build) build_path="$value" ;;
             esac
         fi
@@ -189,7 +186,7 @@ list_models() {
 
     # Print last section
     if [ -n "$section" ]; then
-        _print_model_entry "$section" "$name" "$description" "$model_path" "$build_path" "$current"
+        _print_model_entry "$section" "$name" "$description" "$build_path" "$current"
     fi
 }
 
@@ -214,12 +211,6 @@ serve_model() {
     if ! grep -q "^\[$model_id\]" "$MODELS_CONF"; then
         echo -e "${RED}Error: Model '$model_id' not found${NC}"
         echo "Use 'llm list' to see available models"
-        return 1
-    fi
-
-    local model=$(get_config "$model_id" "model")
-    if [ ! -f "$model" ]; then
-        echo -e "${RED}Error: Model file not found: $model${NC}"
         return 1
     fi
 
@@ -423,12 +414,6 @@ start_instance() {
     if ! grep -q "^\[$model_id\]" "$MODELS_CONF"; then
         echo -e "${RED}Error: Model '$model_id' not found${NC}"
         echo "Use 'llm list' to see available models"
-        return 1
-    fi
-
-    local model=$(get_config "$model_id" "model")
-    if [ ! -f "$model" ]; then
-        echo -e "${RED}Error: Model file not found: $model${NC}"
         return 1
     fi
 
