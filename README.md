@@ -27,16 +27,24 @@ A sophisticated LLM (Large Language Model) management system built around `llama
 
 ## Installation
 
-1. **Copy the launcher script**:
+1. **Create the CLI symlink**:
    ```bash
-   sudo cp ~/.llm/launcher.sh /usr/local/bin/llm
-   sudo chmod +x /usr/local/bin/llm
+   mkdir -p ~/bin
+   ln -s ~/.llm/launcher.sh ~/bin/llm
    ```
 
-   Alternatively, add `~/.llm` to your PATH:
+   Add `~/bin` to your PATH:
    ```bash
-   echo 'export PATH="$HOME/.llm:$PATH"' >> ~/.bashrc
+   # Fish:
+   echo 'set -gx PATH $PATH ~/bin' >> ~/.config/fish/config.fish
+   # Bash:
+   echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
    source ~/.bashrc
+   ```
+
+   Alternatively, install system-wide:
+   ```bash
+   sudo ln -s ~/.llm/launcher.sh /usr/local/bin/llm
    ```
 
 2. **Verify directory structure**:
