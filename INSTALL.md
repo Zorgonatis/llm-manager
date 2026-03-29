@@ -7,22 +7,22 @@
   - **ROCm** — AMD GPUs
   - **CUDA** — NVIDIA GPUs
   - **CPU** — `ik_llama.cpp` or standard llama.cpp CPU build
-- **GGUF model files** — Quantized models in GGUF format
+- **GGUF model files** — Quantized models in GGUF format (or use HuggingFace auto-download)
 - **bash** — Shell for the launcher scripts
 - **systemd** — For service management (user-session)
 
 ## Clone and Setup
 
 ```bash
-# Clone the repo
-git clone <repo-url> ~/.llm
+# Clone the repo to your preferred location
+git clone https://github.com/Zorgonatis/llm-manager.git ~/llm-manager
 
 # Make scripts executable
-chmod +x ~/.llm/launcher.sh ~/.llm/service-wrapper.sh
+chmod +x ~/llm-manager/launcher.sh ~/llm-manager/service-wrapper.sh
 
 # Create the CLI symlink
 mkdir -p ~/bin
-ln -s ~/.llm/launcher.sh ~/bin/llm
+ln -s ~/llm-manager/launcher.sh ~/bin/llm
 
 # Add ~/bin to PATH (choose your shell)
 # Fish:
@@ -46,14 +46,14 @@ Build llama.cpp from source or download prebuilt releases, then note the install
 
 ## Add a Model
 
-1. Place your `.gguf` file in `~/.llm/models/`:
+1. Place your `.gguf` file in the models directory:
 
 ```bash
-mkdir -p ~/.llm/models/my-model
-cp model-Q4_K_M.gguf ~/.llm/models/my-model/
+mkdir -p $LLM_DIR/models/my-model
+cp model-Q4_K_M.gguf $LLM_DIR/models/my-model/
 ```
 
-2. Add a config entry to `~/.llm/models.conf`:
+2. Add a config entry to `models.conf`:
 
 ```ini
 [my-model]
@@ -61,7 +61,7 @@ name="My Model"
 description="Q4_K_M quant on Vulkan GPU"
 build="/opt/llama.cpp/install-vulkan"
 <args>
--m $HOME/.llm/models/my-model/model-Q4_K_M.gguf \
+-m $HOME/models/my-model/model-Q4_K_M.gguf \
 --ctx-size 8192 \
 --threads -1 \
 --device Vulkan0 \
@@ -131,7 +131,7 @@ llm enable
 
 ### `models.conf` — Model configurations
 
-Each model section has four metadata fields and an `<args>` block:
+Each model section has metadata fields and an `<args>` block:
 
 | Field | Required | Description |
 |-------|----------|-------------|
