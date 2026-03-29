@@ -1,0 +1,15 @@
+[Unit]
+Description=LLM Server - Manages multiple llama.cpp models
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=%h/.llm/service-wrapper.sh
+Restart=always
+RestartSec=10
+RestartPreventExitStatus=78
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

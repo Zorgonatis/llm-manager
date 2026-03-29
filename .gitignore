@@ -1,0 +1,15 @@
+# Runtime state
+current_model
+llama.log
+
+# Model files (large binaries) - keep directory structure, ignore contents
+models/*
+!models/.gitkeep
+
+# Logs - keep directory structure, ignore contents
+logs/*
+!logs/.gitkeep
+
+# Instance PID files - keep directory structure, ignore contents
+instances/*
+!instances/.gitkeep
