@@ -136,10 +136,10 @@ build_cmdline() {
     local model_id="$1"
     local port="$2"
 
-    local build
-    build=$(get_config "$model_id" "build")
+    local binary
+    binary=$(get_config "$model_id" "binary")
 
-    CMD_ARRAY=("$build/bin/llama-server")
+    CMD_ARRAY=("$binary")
 
     local args
     args=$(get_args_block "$model_id")
@@ -159,15 +159,15 @@ build_cmdline() {
     CMD_ARRAY+=(--host 0.0.0.0 --port "$port")
 }
 
-# Validate build binary exists
+# Validate binary exists
 validate_build_path() {
     local model_id="$1"
-    local build
+    local binary
 
-    build=$(get_config "$model_id" "build")
+    binary=$(get_config "$model_id" "binary")
 
-    if [ ! -x "$build/bin/llama-server" ]; then
-        echo "Error: llama-server not found or not executable: $build/bin/llama-server" >&2
+    if [ ! -x "$binary" ]; then
+        echo "Error: llama-server not found or not executable: $binary" >&2
         return 1
     fi
     return 0

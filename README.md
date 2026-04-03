@@ -15,7 +15,7 @@ A management system for `llama.cpp` that provides a CLI interface and systemd se
 ## Prerequisites
 
 1. **llama.cpp builds**: Compile or download llama.cpp builds for your hardware.
-   Each build must have the `llama-server` binary at `<build>/bin/llama-server`
+   Each build must have the `llama-server` binary available at the path specified in `binary=`
 
 2. **systemd**: Required for service management (most Linux distributions include it)
 
@@ -93,7 +93,7 @@ Edit `models.conf` to add models. Each model has a section header `[model-id]`, 
 [my-model]
 name="My Model Display Name"
 description="Brief description"
-build="/path/to/llama.cpp/build"
+binary="/path/to/llama.cpp/bin/llama-server"
 <args>
 -m $HOME/models/my-model.gguf \
 --ctx-size 8192 \
@@ -112,7 +112,7 @@ build="/path/to/llama.cpp/build"
 |-------|----------|-------------|
 | `name` | No | Display name (defaults to section ID) |
 | `description` | No | Model description |
-| `build` | Yes | Path to llama.cpp build directory (must contain `bin/llama-server`) |
+| `binary` | Yes | Path to the `llama-server` executable |
 
 ### Args Block
 
@@ -126,7 +126,7 @@ Use `--hf-repo` and `--hf-file` instead of `-m` to auto-download models:
 [hf-model]
 name="HF Auto-Download Model"
 description="Auto-downloaded from HuggingFace"
-build="/opt/llama.cpp"
+binary="/opt/llama.cpp/bin/llama-server"
 <args>
 --hf-repo Qwen/Qwen3-0.6B-GGUF \
 --hf-file qwen3-0.6b-q8_0.gguf \
@@ -176,7 +176,7 @@ systemd -> service-wrapper.sh -> reads llm.conf -> reads current_model
 1. **`llm serve <model>`** writes model ID to `current_model` and starts systemd
 2. **systemd** executes `service-wrapper.sh`
 3. **service-wrapper.sh** reads `current_model` and parses `models.conf`
-4. **Command built** from `build` path + `<args>` block
+4. **Command built** from `binary` path + `<args>` block
 5. **llama-server** runs as systemd service (auto-restart on crash)
 
 ### Port Allocation
@@ -197,7 +197,7 @@ Configured in `llm.conf`:
 [my-cpu-model]
 name="My CPU Model"
 description="Lightweight model for CPU inference"
-build="/opt/llama.cpp"
+binary="/opt/llama.cpp/bin/llama-server"
 <args>
 -m $HOME/models/my-model-Q4_K_M.gguf \
 --ctx-size 4096 \
@@ -211,7 +211,7 @@ build="/opt/llama.cpp"
 [my-gpu-model]
 name="My GPU Model"
 description="Fast GPU inference"
-build="/opt/llama.cpp/install-vulkan"
+binary="/opt/llama.cpp.vulkan/bin/llama-server"
 <args>
 -m $HOME/models/my-model-Q4_K_M.gguf \
 --ctx-size 8192 \
@@ -229,7 +229,7 @@ build="/opt/llama.cpp/install-vulkan"
 [my-multi-gpu]
 name="Multi-GPU Model"
 description="Model split across two GPUs"
-build="/opt/llama.cpp/install-vulkan"
+binary="/opt/llama.cpp.vulkan/bin/llama-server"
 <args>
 -m $HOME/models/my-model.gguf \
 --ctx-size 131072 \
@@ -246,7 +246,7 @@ build="/opt/llama.cpp/install-vulkan"
 [my-vision-model]
 name="Vision Model"
 description="Multimodal model with vision support"
-build="/opt/llama.cpp/install-vulkan"
+binary="/opt/llama.cpp.vulkan/bin/llama-server"
 <args>
 -m $HOME/models/my-model.gguf \
 --mmproj $HOME/models/my-mmproj.gguf \
@@ -263,7 +263,7 @@ build="/opt/llama.cpp/install-vulkan"
 journalctl --user -u llm.service -n 50
 ```
 
-1. Verify llama.cpp build path is correct and `bin/llama-server` exists
+1. Verify the `binary` path in models.conf points to an executable `llama-server`
 2. Check GPU device name with `vulkaninfo` or `nvidia-smi`
 
 ### Port already in use

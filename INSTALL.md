@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- **llama.cpp prebuilt binaries** — You need one or more builds of [llama.cpp](https://github.com/ggml-org/llama.cpp) compiled for your hardware. Each build must contain `bin/llama-server`. Common builds:
+- **llama.cpp prebuilt binaries** — You need one or more builds of [llama.cpp](https://github.com/ggml-org/llama.cpp) compiled for your hardware. The `binary` field in each model config must point to the `llama-server` executable. Common builds:
   - **Vulkan** — Any GPU with Vulkan support
   - **ROCm** — AMD GPUs
   - **CUDA** — NVIDIA GPUs
@@ -33,15 +33,16 @@ source ~/.bashrc
 
 ## Prepare Your llama.cpp Builds
 
-The `build` path in each model config must point to a directory containing `bin/llama-server`. For example:
+The `binary` field in each model config must point directly to a `llama-server` executable. For example:
 
 ```
-/opt/llama.cpp/install-vulkan/bin/llama-server
-/opt/llama.cpp/install-rocm/bin/llama-server
-/opt/llama.cpp/install-cuda/bin/llama-server
+/opt/llama.cpp/bin/llama-server
+/opt/llama.cpp.vulkan/bin/llama-server
+/opt/llama.cpp.cuda/bin/llama-server
+/opt/llama.cpp.rocm/bin/llama-server
 ```
 
-Build llama.cpp from source or download prebuilt releases, then note the install prefix for each backend.
+Build llama.cpp from source or download prebuilt releases, then note the path to each backend's `llama-server`.
 
 ## Add a Model
 
@@ -58,7 +59,7 @@ cp model-Q4_K_M.gguf $LLM_DIR/models/my-model/
 [my-model]
 name="My Model"
 description="Q4_K_M quant on Vulkan GPU"
-build="/opt/llama.cpp/install-vulkan"
+binary="/opt/llama.cpp.vulkan/bin/llama-server"
 <args>
 -m $HOME/models/my-model/model-Q4_K_M.gguf \
 --ctx-size 8192 \
@@ -136,6 +137,6 @@ Each model section has metadata fields and an `<args>` block:
 |-------|----------|-------------|
 | `name` | No | Display name |
 | `description` | No | Short description |
-| `build` | Yes | Path to llama.cpp build (must contain `bin/llama-server`) |
+| `binary` | Yes | Path to the `llama-server` executable |
 
 All other options — including `-m` for the model path — are raw `llama-server` flags in the `<args>` block. For HuggingFace auto-download, use `--hf-repo` and `--hf-file` instead of `-m`. See `llama-server --help` for the full list.

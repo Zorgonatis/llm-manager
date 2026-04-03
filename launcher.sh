@@ -214,9 +214,9 @@ serve_model() {
         return 1
     fi
 
-    local build=$(get_config "$model_id" "build")
-    if [ ! -d "$build" ]; then
-        echo -e "${RED}Error: Build not found: $build${NC}"
+    local binary=$(get_config "$model_id" "binary")
+    if [ ! -x "$binary" ]; then
+        echo -e "${RED}Error: Binary not found: $binary${NC}"
         return 1
     fi
 
@@ -417,9 +417,9 @@ start_instance() {
         return 1
     fi
 
-    local build=$(get_config "$model_id" "build")
-    if [ ! -d "$build" ]; then
-        echo -e "${RED}Error: Build not found: $build${NC}"
+    local binary=$(get_config "$model_id" "binary")
+    if [ ! -x "$binary" ]; then
+        echo -e "${RED}Error: Binary not found: $binary${NC}"
         return 1
     fi
 
