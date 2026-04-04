@@ -19,7 +19,7 @@ rotate_log() {
     for i in $(seq $((count-1)) -1 1); do
         [ -f "${log_file}.$i" ] && mv "${log_file}.$i" "${log_file}.$((i+1))"
     done
-    [ -f "$log_file" ] && mv "$log_file" "${log_file}.1"
+    [ -f "$log_file" ] && mv "$log_file" "${log_file}.1" || true
 }
 
 # Load infrastructure config from llm.conf
