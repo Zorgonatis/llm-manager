@@ -37,8 +37,8 @@ MODELS_CONF="$LLM_DIR/models.conf"
 
 echo "Starting LLM service with model: $MODEL_ID (port $SERVICE_PORT)"
 
-# Validate paths before building command (exit 78 prevents systemd restart loop)
-if ! validate_build_path "$MODEL_ID"; then
+# Validate backend before building command (exit 78 prevents systemd restart loop)
+if ! validate_backend "$MODEL_ID"; then
     exit 78
 fi
 

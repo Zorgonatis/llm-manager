@@ -102,18 +102,20 @@ ensure_service() {
 
 # Print a model entry for list_models
 _print_model_entry() {
-    local model_id="$1" name="$2" description="$3" build_path="$4" current="$5"
+    local model_id="$1" name="$2" description="$3" backend="$4" current="$5"
 
     local status=""
 
-    if [ -n "$build_path" ] && [ -d "$build_path" ]; then
-        if [ -x "$build_path/bin/llama-server" ]; then
-            status="${GREEN}✓${NC}"
+    if [ -n "$backend" ]; then
+        local binary
+        binary=$(get_backend_binary "$backend" 2>/dev/null)
+        if [ -n "$binary" ] && [ -x "$binary" ]; then
+            status="${GREEN}✓${NC} $backend"
         else
-            status="${YELLOW}⚠${NC}"
+            status="${YELLOW}⚠${NC} $backend (not found)"
         fi
     else
-        status="${YELLOW}⚠${NC}"
+        status="${YELLOW}⚠${NC} no backend"
     fi
 
     local current_indicator=""
@@ -137,7 +139,7 @@ list_models() {
         current=$(cat "$CURRENT_MODEL_FILE")
     fi
 
-    local section="" name="" description="" build_path=""
+    local section="" name="" description="" backend=""
     local in_args=0
 
     while IFS= read -r line; do
@@ -149,10 +151,10 @@ list_models() {
         if [[ "$line" =~ ^\[(.*)\]$ ]]; then
             # Print previous section
             if [ -n "$section" ]; then
-                _print_model_entry "$section" "$name" "$description" "$build_path" "$current"
+                _print_model_entry "$section" "$name" "$description" "$backend" "$current"
             fi
             section="${BASH_REMATCH[1]}"
-            name="" description="" build_path=""
+            name="" description="" backend=""
             in_args=0
             continue
         fi
@@ -179,14 +181,14 @@ list_models() {
             case "$key" in
                 name) name="$value" ;;
                 description) description="$value" ;;
-                build) build_path="$value" ;;
+                backend) backend="$value" ;;
             esac
         fi
     done < "$MODELS_CONF"
 
     # Print last section
     if [ -n "$section" ]; then
-        _print_model_entry "$section" "$name" "$description" "$build_path" "$current"
+        _print_model_entry "$section" "$name" "$description" "$backend" "$current"
     fi
 }
 
@@ -214,9 +216,7 @@ serve_model() {
         return 1
     fi
 
-    local binary=$(get_config "$model_id" "binary")
-    if [ ! -x "$binary" ]; then
-        echo -e "${RED}Error: Binary not found: $binary${NC}"
+    if ! validate_backend "$model_id"; then
         return 1
     fi
 
@@ -417,9 +417,7 @@ start_instance() {
         return 1
     fi
 
-    local binary=$(get_config "$model_id" "binary")
-    if [ ! -x "$binary" ]; then
-        echo -e "${RED}Error: Binary not found: $binary${NC}"
+    if ! validate_backend "$model_id"; then
         return 1
     fi
 

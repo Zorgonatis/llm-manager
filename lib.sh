@@ -22,15 +22,19 @@ rotate_log() {
     [ -f "$log_file" ] && mv "$log_file" "${log_file}.1" || true
 }
 
-# Load infrastructure config from llm.conf
+# Load infrastructure config from llm.conf (top-level key=value only)
+# Backend sections are handled separately by get_config_from.
+# Top-level config must come before any [section] headers.
 load_config() {
     local conf_file="$1"
 
-    # Read config file and export variables with expansion
     while IFS='=' read -r key value; do
         # Skip comments and empty lines
-        [[ "$key" =~ ^#.*$ ]] && continue
-        [[ -z "$key" ]] && continue
+        [[ "$key" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "${key// /}" ]] && continue
+
+        # Stop at first section header - rest is handled by get_config_from
+        [[ "$key" =~ ^\[.*\]$ ]] && break
 
         key=$(echo "$key" | xargs)
         value=$(echo "$value" | xargs | tr -d '"')
@@ -47,10 +51,12 @@ load_config() {
     done < "$conf_file"
 }
 
-# Parse INI config (for metadata fields)
-get_config() {
-    local section="$1"
-    local key="$2"
+# Parse INI config from specified file (for metadata fields)
+# Usage: get_config_from <file> <section> <key>
+get_config_from() {
+    local conf_file="$1"
+    local section="$2"
+    local key="$3"
     local in_section=0
 
     while IFS='=' read -r k v; do
@@ -71,8 +77,26 @@ get_config() {
             echo "$v"
             return
         fi
-    done < "$MODELS_CONF"
+    done < "$conf_file"
     return 1
+}
+
+# Parse INI config from models.conf (convenience wrapper)
+get_config() {
+    get_config_from "$MODELS_CONF" "$1" "$2"
+}
+
+# Get backend binary path from llm.conf
+# Usage: get_backend_binary <backend_name>
+get_backend_binary() {
+    local backend_name="$1"
+    local binary
+    binary=$(get_config_from "$LLM_CONF" "backend.$backend_name" "binary")
+    if [ -z "$binary" ]; then
+        echo "Error: Backend '$backend_name' not found in $LLM_CONF" >&2
+        return 1
+    fi
+    echo "$binary"
 }
 
 # Extract <args>...</args> block from a section
@@ -136,8 +160,13 @@ build_cmdline() {
     local model_id="$1"
     local port="$2"
 
-    local binary
-    binary=$(get_config "$model_id" "binary")
+    local backend binary
+    backend=$(get_config "$model_id" "backend")
+    if [ -z "$backend" ]; then
+        echo "Error: No 'backend' specified for model '$model_id'" >&2
+        return 1
+    fi
+    binary=$(get_backend_binary "$backend") || return 1
 
     CMD_ARRAY=("$binary")
 
@@ -159,15 +188,20 @@ build_cmdline() {
     CMD_ARRAY+=(--host 0.0.0.0 --port "$port")
 }
 
-# Validate binary exists
-validate_build_path() {
+# Validate backend binary exists
+validate_backend() {
     local model_id="$1"
-    local binary
+    local backend binary
 
-    binary=$(get_config "$model_id" "binary")
+    backend=$(get_config "$model_id" "backend")
+    if [ -z "$backend" ]; then
+        echo "Error: No 'backend' specified for model '$model_id'" >&2
+        return 1
+    fi
+    binary=$(get_backend_binary "$backend") || return 1
 
     if [ ! -x "$binary" ]; then
-        echo "Error: llama-server not found or not executable: $binary" >&2
+        echo "Error: Backend binary not found or not executable: $binary" >&2
         return 1
     fi
     return 0
