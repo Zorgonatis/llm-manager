@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=%h/.llm/service-wrapper.sh
+ExecStart=%h/Projects/llm-manager/service-wrapper.sh
 Restart=always
 RestartSec=10
 RestartPreventExitStatus=78
